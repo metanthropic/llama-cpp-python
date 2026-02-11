@@ -1,4 +1,4 @@
-name: Build Stable CPU Release (v0.3.16)
+name: Build Compatible CPU Release (v0.3.16)
 
 on:
   workflow_dispatch:
@@ -8,15 +8,13 @@ permissions:
 
 jobs:
   build_cpu_wheel:
-    name: Build CPU Wheel for Hugging Face
-    runs-on: ubuntu-latest
+    name: Build CPU Wheel (Ubuntu 22.04)
+    # ⚠️ CRITICAL FIX: Use 22.04 to ensure glibc compatibility with Debian 12
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v4
         with:
-          # ⚡ FIX: FETCH FROM UPSTREAM ⚡
-          # We grab the code from the original author (abetlen) because
-          # your fork might be missing the tags.
           repository: abetlen/llama-cpp-python
           ref: v0.3.16
           submodules: recursive
@@ -30,9 +28,9 @@ jobs:
         run: |
           pip install build wheel scikit-build-core cmake
 
-      - name: ⚡ Compile Optimized CPU Wheel (v0.3.16) ⚡
+      - name: ⚡ Compile Compatible CPU Wheel ⚡
         env:
-          # Force CPU-only build with pthread support
+          # Same optimizations, just older OS base
           CMAKE_ARGS: "-DLLAMA_BLAS=OFF -DLLAMA_CUBLAS=OFF -DLLAMA_METAL=OFF -DCMAKE_C_FLAGS='-pthread' -DCMAKE_CXX_FLAGS='-pthread'"
           FORCE_CMAKE: "1"
         run: |
@@ -41,8 +39,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: cpu-stable-v0.3.16
-          name: "Metanthropic CPU Release (v0.3.16)"
+          tag_name: cpu-compatible-v0.3.16
+          name: "Metanthropic Compatible Release (v0.3.16)"
           files: dist/*.whl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
